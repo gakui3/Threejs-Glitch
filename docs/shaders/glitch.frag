@@ -60,6 +60,16 @@ vec3 yuv2rgb( vec3 yuv ){
     return rgb;
 }
 
+float randomTransition(float minmam){
+    vec2 grid = vec2(20, 100);
+
+    float _x = floor(texcoord.x * grid.x);
+    float _y = floor(texcoord.y * grid.y);
+
+    float v = rand2d(vec2(_x, _y));
+    return step(minmam, v);
+}
+
 float sat1d( float t ) { return clamp( t, 0.0, 1.0 ); }
 vec2 sat2d( vec2 t ) { return clamp( t, 0.0, 1.0 ); }
 float _rand( vec2 n ) { return fract(sin(dot(n.xy, vec2(12.9898, 78.233)))* 43758.5453); }
@@ -109,9 +119,10 @@ void main() {
     float offset_r = noise(vec2(time, 1.0)) * 0.005;
     float offset_g = noise(vec2(time, 2.0)) * 0.005;
     float offset_b = noise(vec2(time, 3.0)) * 0.005;
-    float samp_r = mix(texture2D( currentTex, uv_nm + vec2(0, offset_r)).r, texture2D( transitionTex, uv_nm + vec2(0, offset_r)).r, transitionValue);
-    float samp_g = mix(texture2D( currentTex, uv_nm - vec2(0, offset_g)).g, texture2D( transitionTex, uv_nm - vec2(0, offset_g)).g, transitionValue);
-    float samp_b = mix(texture2D( currentTex, uv_nm + vec2(0, offset_b)).b, texture2D( transitionTex, uv_nm + vec2(0, offset_b)).b, transitionValue);
+    float tv = randomTransition(transitionValue);
+    float samp_r = mix(texture2D( currentTex, uv_nm + vec2(0, offset_r)).r, texture2D( transitionTex, uv_nm + vec2(0, offset_r)).r, tv);
+    float samp_g = mix(texture2D( currentTex, uv_nm - vec2(0, offset_g)).g, texture2D( transitionTex, uv_nm - vec2(0, offset_g)).g, tv);
+    float samp_b = mix(texture2D( currentTex, uv_nm + vec2(0, offset_b)).b, texture2D( transitionTex, uv_nm + vec2(0, offset_b)).b, tv);
     vec4 samp = vec4(samp_r, samp_g, samp_b, 1.0);
 
     // vec4 samp = texture2D( currentTex, uv_nm);
@@ -119,7 +130,10 @@ void main() {
     // sample_yuv.y /= 1.0-3.0 * abs(vt_rnd) * sat1d( 0.5 - vt_rnd);
     // sample_yuv.z += 0.125 * vt_rnd * sat1d( vt_rnd - 0.5);
     // vec4 c = vec4( yuv2rgb(sample_yuv), 1.0);
-    // gl_FragColor = c;
-
     gl_FragColor = samp;
+
+
+    // vec4 c0 = texture2D(currentTex, texcoord);
+    // vec4 c1 = texture2D(transitionTex, texcoord);
+    // vec4 c2 = mix(c0, c1, randomTransition(transitionValue));
 }
