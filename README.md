@@ -1,4 +1,4 @@
-https://gakui3.github.io/Threejs-TranditionEffect/
+https://gakui3.github.io/Threejs-Glitch/
 
 
 install  
