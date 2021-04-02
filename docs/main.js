@@ -7,7 +7,18 @@ import { EffectComposer } from "three/examples/jsm/postprocessing/EffectComposer
 import { RenderPass } from "three/examples/jsm/postprocessing/RenderPass.js";
 import { FilmPass } from "three/examples/jsm/postprocessing/FilmPass.js";
 
-let gui, mat, clock, plane, scene, texture1, camera, canvas, composer, renderer;
+let gui,
+  mat,
+  clock,
+  plane,
+  scene,
+  texture1,
+  texture2,
+  camera,
+  canvas,
+  composer,
+  currentTex,
+  renderer;
 
 const param = {
   jitterAmount: 100.0,
@@ -23,6 +34,7 @@ const param = {
   offset: 0.15,
   amount: 0.25,
   thickness: 5.0,
+  transitionValue: 0.0,
 };
 
 function init() {
@@ -34,6 +46,9 @@ function init() {
   scene.background = new THREE.Color(0x000000);
   clock = new THREE.Clock();
   clock.start();
+
+  currentTex = 0;
+  canvas.addEventListener("click", onClick, false);
 }
 
 function update() {
@@ -76,11 +91,16 @@ function addGUI() {
   gui.add(param, "thickness", 0.01, 10.0).onChange((value) => {
     mat.uniforms.thickness.value = value;
   });
+  gui.add(param, "transitionValue", 0.0, 1.0).onChange((value) => {
+    mat.uniforms.transitionValue.value = value;
+  });
 }
 
 function easeInOutQuart(x) {
   return x < 0.5 ? 8 * x * x * x * x : 1 - Math.pow(-2 * x + 2, 4) / 2;
 }
+
+function transitionTexture() {}
 
 function addEffect() {
   composer = new EffectComposer(renderer);
@@ -114,13 +134,19 @@ function addCamera() {
   camera.aspect = canvas.clientWidth / canvas.clientHeight;
 }
 
+function onClick(e) {
+  console.log(e);
+}
+
 async function addPlane() {
   const loader = new THREE.TextureLoader();
-  texture1 = await Promise.resolve(loader.loadAsync("./resources/test2.jpg"));
+  texture1 = await Promise.resolve(loader.loadAsync("./resources/test01.jpg"));
+  texture2 = await Promise.resolve(loader.loadAsync("./resources/test02.jpg"));
 
   mat = new THREE.ShaderMaterial({
     uniforms: {
-      tex1: { value: texture1 },
+      currentTex: { value: texture1 },
+      transitionTex: { value: texture2 },
       time: { value: 1.0 },
       speed: { value: 0.2 },
       strength: { value: 0.3 },
@@ -128,6 +154,7 @@ async function addPlane() {
       offset: { value: 0.15 },
       amount: { value: 0.25 },
       thickness: { value: 5.0 },
+      transitionValue: { value: 0.0 },
     },
     vertexShader: simpleVert,
     fragmentShader: glitchFrag,
