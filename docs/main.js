@@ -2,7 +2,6 @@ import * as THREE from "three";
 import simpleVert from "./shaders/simple.vert";
 import glitchFrag from "./shaders/glitch.frag";
 import { GUI } from "three/examples/jsm/libs/dat.gui.module";
-import { ShaderMaterial } from "three";
 import { EffectComposer } from "three/examples/jsm/postprocessing/EffectComposer.js";
 import { RenderPass } from "three/examples/jsm/postprocessing/RenderPass.js";
 import { FilmPass } from "three/examples/jsm/postprocessing/FilmPass.js";
@@ -28,12 +27,13 @@ const param = {
   loopTransition: false,
   effect: "effect1",
 
-  speed: 0.2,
-  strength: 0.3,
-  stretch: 0.02,
-  offset: 0.15,
-  amount: 0.25,
-  thickness: 5.0,
+  speed: 1.5,
+  distortionStrength: 0.2,
+  distortionWidth: 0.2,
+  distortionInterval: 1.0,
+  blockNoiseOffset: 0.15,
+  blockNoiseAmount: 0.25,
+  blockThickness: 5.0,
   transitionValue: 0.0,
 };
 
@@ -47,8 +47,8 @@ function init() {
   clock = new THREE.Clock();
   clock.start();
 
-  currentTex = 0;
-  canvas.addEventListener("click", onClick, false);
+  // currentTex = 0;
+  // canvas.addEventListener("click", onClick, false);
 }
 
 function update() {
@@ -61,11 +61,8 @@ function update() {
     composer.setSize(canvas.width, canvas.height);
   }
 
-  let time = performance.now() * 0.001;
-  time = time;
-  mat.uniforms.time.value = time;
+  mat.uniforms.time.value = clock.getElapsedTime();
 
-  //renderer.render(scene, camera);
   composer.render(clock.getDelta());
 }
 
@@ -73,23 +70,26 @@ function addGUI() {
   gui = new GUI();
   gui.width = 300;
 
-  gui.add(param, "speed", 0.1, 0.5).onChange((value) => {
+  gui.add(param, "speed", 1.0, 3.0).onChange((value) => {
     mat.uniforms.speed.value = value;
   });
-  gui.add(param, "strength", 0.0, 2.0).onChange((value) => {
-    mat.uniforms.strength.value = value;
+  gui.add(param, "distortionStrength", 0.01, 0.5).onChange((value) => {
+    mat.uniforms.distortionStrength.value = value;
   });
-  gui.add(param, "stretch", 0.0, 0.2).onChange((value) => {
-    mat.uniforms.stretch.value = value;
+  gui.add(param, "distortionWidth", 0.01, 0.5).onChange((value) => {
+    mat.uniforms.distortionWidth.value = value;
   });
-  gui.add(param, "offset", 0.01, 0.2).onChange((value) => {
-    mat.uniforms.offset.value = value;
+  gui.add(param, "distortionInterval", 0.5, 2.0).onChange((value) => {
+    mat.uniforms.distortionInterval.value = value;
   });
-  gui.add(param, "amount", 0.0, 1.0).onChange((value) => {
-    mat.uniforms.amount.value = value;
+  gui.add(param, "blockNoiseOffset", 0.05, 0.2).onChange((value) => {
+    mat.uniforms.blockNoiseOffset.value = value;
   });
-  gui.add(param, "thickness", 0.01, 10.0).onChange((value) => {
-    mat.uniforms.thickness.value = value;
+  gui.add(param, "blockNoiseAmount", 0.0, 1.0).onChange((value) => {
+    mat.uniforms.blockNoiseAmount.value = value;
+  });
+  gui.add(param, "blockThickness", 0.1, 10.0).onChange((value) => {
+    mat.uniforms.blockThickness.value = value;
   });
   gui.add(param, "transitionValue", 0.0, 1.0).onChange((value) => {
     mat.uniforms.transitionValue.value = value;
@@ -147,13 +147,14 @@ async function addPlane() {
     uniforms: {
       currentTex: { value: texture1 },
       transitionTex: { value: texture2 },
-      time: { value: 1.0 },
-      speed: { value: 0.2 },
-      strength: { value: 0.3 },
-      stretch: { value: 0.02 },
-      offset: { value: 0.15 },
-      amount: { value: 0.25 },
-      thickness: { value: 5.0 },
+      time: { value: 0.0 },
+      speed: { value: 1.5 },
+      distortionStrength: { value: 0.3 },
+      distortionWidth: { value: 0.2 },
+      distortionInterval: { value: 1.0 },
+      blockNoiseOffset: { value: 0.15 },
+      blockNoiseAmount: { value: 0.25 },
+      blockThickness: { value: 5.0 },
       transitionValue: { value: 0.0 },
     },
     vertexShader: simpleVert,
