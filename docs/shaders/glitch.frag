@@ -11,6 +11,7 @@ uniform float distortionInterval;
 uniform float blockNoiseOffset;
 uniform float blockNoiseAmount;
 uniform float blockThickness;
+uniform float chromaticAberrationAmount;
 uniform float transitionValue;
 // uniform float distortionT
 
@@ -120,9 +121,9 @@ void main() {
     float rnd = _rand( vec2(rn,rn));
 
     //rgb shift
-    float offset_r = noise(vec2(_time, 1.0)) * 0.005;
-    float offset_g = noise(vec2(_time, 2.0)) * 0.005;
-    float offset_b = noise(vec2(_time, 3.0)) * 0.005;
+    float offset_r = noise(vec2(_time*2.0, 1.0)) * 0.005 * chromaticAberrationAmount;
+    float offset_g = noise(vec2(_time*2.0, 2.0)) * 0.005 * chromaticAberrationAmount;
+    float offset_b = noise(vec2(_time*2.0, 3.0)) * 0.005 * chromaticAberrationAmount;
     float tv = randomTransition(transitionValue);
     float samp_r = mix(texture2D( currentTex, uv_nm + vec2(0, offset_r)).r, texture2D( transitionTex, uv_nm + vec2(0, offset_r)).r, tv);
     float samp_g = mix(texture2D( currentTex, uv_nm - vec2(0, offset_g)).g, texture2D( transitionTex, uv_nm - vec2(0, offset_g)).g, tv);

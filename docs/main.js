@@ -35,6 +35,7 @@ const param = {
   blockNoiseAmount: 0.25,
   blockThickness: 5.0,
   transitionValue: 0.0,
+  chromaticAberrationAmount: 1.0,
 };
 
 function init() {
@@ -68,7 +69,7 @@ function update() {
 
 function addGUI() {
   gui = new GUI();
-  gui.width = 300;
+  gui.width = 400;
 
   gui.add(param, "speed", 1.0, 3.0).onChange((value) => {
     mat.uniforms.speed.value = value;
@@ -90,6 +91,9 @@ function addGUI() {
   });
   gui.add(param, "blockThickness", 0.1, 10.0).onChange((value) => {
     mat.uniforms.blockThickness.value = value;
+  });
+  gui.add(param, "chromaticAberrationAmount", 0.1, 2.0).onChange((value) => {
+    mat.uniforms.chromaticAberrationAmount.value = value;
   });
   gui.add(param, "transitionValue", 0.0, 1.0).onChange((value) => {
     mat.uniforms.transitionValue.value = value;
@@ -156,6 +160,7 @@ async function addPlane() {
       blockNoiseAmount: { value: 0.25 },
       blockThickness: { value: 5.0 },
       transitionValue: { value: 0.0 },
+      chromaticAberrationAmount: { value: 1.0 },
     },
     vertexShader: simpleVert,
     fragmentShader: glitchFrag,
