@@ -1,4 +1,5 @@
 import * as THREE from "three";
+import * as TWEEN from "@tweenjs/tween.js";
 import simpleVert from "./shaders/simple.vert";
 import glitchFrag from "./shaders/glitch.frag";
 import { GUI } from "three/examples/jsm/libs/dat.gui.module";
@@ -16,7 +17,8 @@ let gui,
   camera,
   canvas,
   composer,
-  currentTex,
+  currentTexIndex = 0,
+  textures = [],
   renderer;
 
 const param = {
@@ -36,6 +38,9 @@ const param = {
   blockThickness: 5.0,
   transitionValue: 0.0,
   chromaticAberrationAmount: 1.0,
+  onClick: function () {
+    transitionTexture();
+  },
 };
 
 function init() {
@@ -62,8 +67,9 @@ function update() {
     composer.setSize(canvas.width, canvas.height);
   }
 
-  mat.uniforms.time.value = clock.getElapsedTime();
-
+  let time = clock.getElapsedTime();
+  mat.uniforms.time.value = time;
+  TWEEN.update();
   composer.render(clock.getDelta());
 }
 
@@ -98,13 +104,48 @@ function addGUI() {
   gui.add(param, "transitionValue", 0.0, 1.0).onChange((value) => {
     mat.uniforms.transitionValue.value = value;
   });
+  gui.add(param, "onClick").name("click this to start transition");
 }
 
 function easeInOutQuart(x) {
   return x < 0.5 ? 8 * x * x * x * x : 1 - Math.pow(-2 * x + 2, 4) / 2;
 }
 
-function transitionTexture() {}
+function transitionTexture() {
+  console.log(textures.length);
+  let transitionTexIndex = currentTexIndex;
+  while (transitionTexIndex == currentTexIndex) {
+    transitionTexIndex = Math.floor(Math.random() * textures.length);
+  }
+
+  mat.uniforms.transitionTex.value = textures[transitionTexIndex];
+
+  const p = { v: 0.0 };
+  const tween01 = new TWEEN.Tween(p)
+    .to({ v: 1.0 }, 200)
+    .easing(TWEEN.Easing.Quadratic.Out)
+    .onUpdate(() => {
+      mat.uniforms.blockNoiseAmount.value = p.v;
+    })
+    .delay(100)
+    .start();
+
+  const tween02 = new TWEEN.Tween(p)
+    .to({ v: 1.0 }, 150)
+    .easing(TWEEN.Easing.Quadratic.Out)
+    .onUpdate(() => {
+      mat.uniforms.transitionValue.value = p.v;
+    })
+    .onComplete(() => {
+      // mat.uniforms.transitionValue.value = p.tv;
+      mat.uniforms.currentTex.value = textures[transitionTexIndex];
+      currentTexIndex = transitionTexIndex;
+      mat.uniforms.transitionValue.value = 0;
+      mat.uniforms.blockNoiseAmount.value = 0;
+    })
+    .delay(500)
+    .start();
+}
 
 function addEffect() {
   composer = new EffectComposer(renderer);
@@ -138,14 +179,13 @@ function addCamera() {
   camera.aspect = canvas.clientWidth / canvas.clientHeight;
 }
 
-function onClick(e) {
-  console.log(e);
-}
-
 async function addPlane() {
   const loader = new THREE.TextureLoader();
   texture1 = await Promise.resolve(loader.loadAsync("./resources/test01.jpg"));
   texture2 = await Promise.resolve(loader.loadAsync("./resources/test02.jpg"));
+
+  textures.push(texture1);
+  textures.push(texture2);
 
   mat = new THREE.ShaderMaterial({
     uniforms: {

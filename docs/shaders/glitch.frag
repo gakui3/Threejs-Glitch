@@ -71,7 +71,7 @@ float randomTransition(float minmam){
     float _y = floor(texcoord.y * grid.y);
 
     float v = rand2d(vec2(_x, _y));
-    return step(minmam, v);
+    return 1.0 - step(minmam, v);
 }
 
 float sat1d( float t ) { return clamp( t, 0.0, 1.0 ); }
