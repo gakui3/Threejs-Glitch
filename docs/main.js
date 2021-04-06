@@ -11,9 +11,8 @@ let gui,
   mat,
   clock,
   plane,
+  planeSize,
   scene,
-  texture1,
-  texture2,
   camera,
   canvas,
   composer,
@@ -37,6 +36,7 @@ const param = {
   blockNoiseAmount: 0.25,
   blockThickness: 5.0,
   transitionValue: 0.0,
+  planeScale: 1.0,
   chromaticAberrationAmount: 1.0,
   onClick: function () {
     transitionTexture();
@@ -52,9 +52,6 @@ function init() {
   scene.background = new THREE.Color(0x000000);
   clock = new THREE.Clock();
   clock.start();
-
-  // currentTex = 0;
-  // canvas.addEventListener("click", onClick, false);
 }
 
 function update() {
@@ -104,11 +101,10 @@ function addGUI() {
   gui.add(param, "transitionValue", 0.0, 1.0).onChange((value) => {
     mat.uniforms.transitionValue.value = value;
   });
+  gui.add(param, "planeScale", 0.1, 1.0).onChange((value) => {
+    plane.scale.set(value, value, 1);
+  });
   gui.add(param, "onClick").name("click this to start transition");
-}
-
-function easeInOutQuart(x) {
-  return x < 0.5 ? 8 * x * x * x * x : 1 - Math.pow(-2 * x + 2, 4) / 2;
 }
 
 function transitionTexture() {
@@ -119,6 +115,9 @@ function transitionTexture() {
   }
 
   mat.uniforms.transitionTex.value = textures[transitionTexIndex];
+  mat.uniforms.transitionTexUvRate.value = calculateUvRate(
+    textures[transitionTexIndex]
+  );
 
   const p = { v: 0.0 };
   const tween01 = new TWEEN.Tween(p)
@@ -137,7 +136,9 @@ function transitionTexture() {
       mat.uniforms.transitionValue.value = p.v;
     })
     .onComplete(() => {
-      // mat.uniforms.transitionValue.value = p.tv;
+      mat.uniforms.currentTexUvRate.value = calculateUvRate(
+        textures[transitionTexIndex]
+      );
       mat.uniforms.currentTex.value = textures[transitionTexIndex];
       currentTexIndex = transitionTexIndex;
       mat.uniforms.transitionValue.value = 0;
@@ -145,6 +146,24 @@ function transitionTexture() {
     })
     .delay(500)
     .start();
+}
+
+function calculateUvRate(tex) {
+  let uvRate = new THREE.Vector4(0, 1, 0, 1);
+
+  if (tex.image.height * (planeSize.x / tex.image.width) <= planeSize.y) {
+    let v = (tex.image.height * planeSize.x) / planeSize.y;
+    v = v / tex.image.width;
+    uvRate.x = (1.0 - v) / 2.0;
+    uvRate.y = v + (1.0 - v) / 2.0;
+  } else {
+    let v = (tex.image.width * planeSize.y) / planeSize.x;
+    v = v / tex.image.height;
+    uvRate.z = (1.0 - v) / 2.0;
+    uvRate.w = v + (1.0 - v) / 2.0;
+  }
+
+  return uvRate;
 }
 
 function addEffect() {
@@ -174,23 +193,39 @@ function resizeRendererToDisplaySize(renderer) {
 }
 
 function addCamera() {
-  camera = new THREE.PerspectiveCamera(45, 800 / 600, 0.1, 100);
+  camera = new THREE.PerspectiveCamera(45, 1.0, 0.1, 100);
   camera.position.set(0, 0, 0);
   camera.aspect = canvas.clientWidth / canvas.clientHeight;
+
+  console.log(`${canvas.clientWidth}  ${canvas.clientHeight}`);
 }
 
 async function addPlane() {
   const loader = new THREE.TextureLoader();
-  texture1 = await Promise.resolve(loader.loadAsync("./resources/test01.jpg"));
-  texture2 = await Promise.resolve(loader.loadAsync("./resources/test02.jpg"));
+  let texture1 = await Promise.resolve(
+    loader.loadAsync("./resources/test01.jpg")
+  );
+  let texture2 = await Promise.resolve(
+    loader.loadAsync("./resources/test02.jpg")
+  );
+  let texture3 = await Promise.resolve(
+    loader.loadAsync("./resources/test03.jpeg")
+  );
 
   textures.push(texture1);
   textures.push(texture2);
+  textures.push(texture3);
+
+  planeSize = new THREE.Vector2(3.5, 5.0);
+
+  let uvRate = calculateUvRate(texture1);
 
   mat = new THREE.ShaderMaterial({
     uniforms: {
       currentTex: { value: texture1 },
       transitionTex: { value: texture2 },
+      currentTexUvRate: { value: uvRate },
+      transitionTexUvRate: { value: uvRate },
       time: { value: 0.0 },
       speed: { value: 1.5 },
       distortionStrength: { value: 0.3 },
@@ -206,10 +241,10 @@ async function addPlane() {
     fragmentShader: glitchFrag,
   });
 
-  const geometry = new THREE.PlaneGeometry(8, 8);
+  const geometry = new THREE.PlaneGeometry(planeSize.x, planeSize.y); //0.75 1.0
   plane = new THREE.Mesh(geometry, mat);
   plane.name = "plane";
-  plane.position.z = -10;
+  plane.position.z = -7;
   scene.add(plane);
 }
 

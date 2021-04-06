@@ -3,6 +3,8 @@
 
 uniform sampler2D currentTex;
 uniform sampler2D transitionTex;
+uniform vec4 currentTexUvRate;
+uniform vec4 transitionTexUvRate;
 uniform float time;
 uniform float speed;
 uniform float distortionStrength;
@@ -74,6 +76,10 @@ float randomTransition(float minmam){
     return 1.0 - step(minmam, v);
 }
 
+float map(float value, float start1, float end1, float start2, float end2) {
+  return start2 + (end2 - start2) * ((value - start1) / (end1 - start1));
+}
+
 float sat1d( float t ) { return clamp( t, 0.0, 1.0 ); }
 vec2 sat2d( vec2 t ) { return clamp( t, 0.0, 1.0 ); }
 float _rand( vec2 n ) { return fract(sin(dot(n.xy, vec2(12.9898, 78.233)))* 43758.5453); }
@@ -101,8 +107,6 @@ void main() {
         _texcoord.x += vv;
     }
 
-    //vec2 _texcoord = vec2(sin(_time+texcoord.y)*0.1+texcoord.x, texcoord.y);
-
     //block noise
     uv = _texcoord;
     float ct = trunc1d(_time, 4.0);
@@ -115,8 +119,16 @@ void main() {
     vt_rnd = sign(vt_rnd) * sat1d( (abs(vt_rnd) - _blockNoiseAmount) / (0.40));
     vt_rnd = mix(0.0, vt_rnd, blockNoiseOffset);
     vt_rnd = clamp(vt_rnd, 0.0, 1.0);
-    vec2 uv_nm = uv;
-    uv_nm = sat2d( uv_nm + vec2(0.1 * vt_rnd, 0.0));
+
+    vec2 current_uv_nm = vec2(map(uv.x, 0.0, 1.0, currentTexUvRate.x, currentTexUvRate.y), 
+                        map(uv.y, 0.0, 1.0, currentTexUvRate.z, currentTexUvRate.w));
+    current_uv_nm = sat2d( current_uv_nm + vec2(0.1 * vt_rnd, 0.0));
+
+    vec2 transition_uv_nm = vec2(map(uv.x, 0.0, 1.0, transitionTexUvRate.x, transitionTexUvRate.y), 
+                        map(uv.y, 0.0, 1.0, transitionTexUvRate.z, transitionTexUvRate.w));
+    transition_uv_nm = sat2d( transition_uv_nm + vec2(0.1 * vt_rnd, 0.0));
+
+
     float rn= trunc1d( _time, 2.0 );
     float rnd = _rand( vec2(rn,rn));
 
@@ -125,18 +137,12 @@ void main() {
     float offset_g = noise(vec2(_time*2.0, 2.0)) * 0.005 * chromaticAberrationAmount;
     float offset_b = noise(vec2(_time*2.0, 3.0)) * 0.005 * chromaticAberrationAmount;
     float tv = randomTransition(transitionValue);
-    float samp_r = mix(texture2D( currentTex, uv_nm + vec2(0, offset_r)).r, texture2D( transitionTex, uv_nm + vec2(0, offset_r)).r, tv);
-    float samp_g = mix(texture2D( currentTex, uv_nm - vec2(0, offset_g)).g, texture2D( transitionTex, uv_nm - vec2(0, offset_g)).g, tv);
-    float samp_b = mix(texture2D( currentTex, uv_nm + vec2(0, offset_b)).b, texture2D( transitionTex, uv_nm + vec2(0, offset_b)).b, tv);
+    float samp_r = mix(texture2D( currentTex, current_uv_nm + vec2(0, offset_r)).r, texture2D( transitionTex, transition_uv_nm + vec2(0, offset_r)).r, tv);
+    float samp_g = mix(texture2D( currentTex, current_uv_nm - vec2(0, offset_g)).g, texture2D( transitionTex, transition_uv_nm - vec2(0, offset_g)).g, tv);
+    float samp_b = mix(texture2D( currentTex, current_uv_nm + vec2(0, offset_b)).b, texture2D( transitionTex, transition_uv_nm + vec2(0, offset_b)).b, tv);
     vec4 samp = vec4(samp_r, samp_g, samp_b, 1.0);
 
-    // vec4 samp = texture2D( currentTex, uv_nm);
-    // vec3 sample_yuv = rgb2yuv(samp.rgb); 
-    // sample_yuv.y /= 1.0-3.0 * abs(vt_rnd) * sat1d( 0.5 - vt_rnd);
-    // sample_yuv.z += 0.125 * vt_rnd * sat1d( vt_rnd - 0.5);
-    // vec4 c = vec4( yuv2rgb(sample_yuv), 1.0);
     gl_FragColor = samp;
-
 
     // vec4 c0 = texture2D(currentTex, texcoord);
     // vec4 c1 = texture2D(transitionTex, texcoord);
