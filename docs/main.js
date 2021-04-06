@@ -108,7 +108,6 @@ function addGUI() {
 }
 
 function transitionTexture() {
-  console.log(textures.length);
   let transitionTexIndex = currentTexIndex;
   while (transitionTexIndex == currentTexIndex) {
     transitionTexIndex = Math.floor(Math.random() * textures.length);
