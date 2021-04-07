@@ -59,7 +59,7 @@ function update() {
 
   if (resizeRendererToDisplaySize(renderer)) {
     const canvas = renderer.domElement;
-    camera.aspect = canvas.clientWidth / canvas.clientHeight;
+    // camera.aspect = canvas.clientWidth / canvas.clientHeight;
     camera.updateProjectionMatrix();
     composer.setSize(canvas.width, canvas.height);
   }
@@ -199,9 +199,17 @@ function resizeRendererToDisplaySize(renderer) {
 }
 
 function addCamera() {
-  camera = new THREE.PerspectiveCamera(45, 1.0, 0.1, 100);
+  //camera = new THREE.PerspectiveCamera(45, 1.0, 0.1, 100);
+  camera = new THREE.OrthographicCamera(
+    -canvas.clientWidth / 2,
+    canvas.clientWidth / 2,
+    canvas.clientHeight / 2,
+    -canvas.clientHeight / 2,
+    0.1,
+    1000
+  );
   camera.position.set(0, 0, 0);
-  camera.aspect = canvas.clientWidth / canvas.clientHeight;
+  // camera.aspect = canvas.clientWidth / canvas.clientHeight;
 
   console.log(`${canvas.clientWidth}  ${canvas.clientHeight}`);
 }
@@ -222,7 +230,7 @@ async function addPlane() {
   textures.push(texture2);
   textures.push(texture3);
 
-  planeSize = new THREE.Vector2(3.5, 5.0);
+  planeSize = new THREE.Vector2(350, 500);
 
   let uvRate = calculateUvRate(texture1);
 
@@ -250,7 +258,7 @@ async function addPlane() {
   const geometry = new THREE.PlaneGeometry(planeSize.x, planeSize.y); //0.75 1.0
   plane = new THREE.Mesh(geometry, mat);
   plane.name = "plane";
-  plane.position.z = -7;
+  plane.position.z = -1;
   scene.add(plane);
 }
 
