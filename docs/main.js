@@ -109,8 +109,15 @@ function addGUI() {
 
 function transitionTexture() {
   let transitionTexIndex = currentTexIndex;
-  while (transitionTexIndex == currentTexIndex) {
-    transitionTexIndex = Math.floor(Math.random() * textures.length);
+
+  //for random texture index
+  // while (transitionTexIndex == currentTexIndex) {
+  //   transitionTexIndex = Math.floor(Math.random() * textures.length);
+  // }
+
+  transitionTexIndex += 1;
+  if (transitionTexIndex > textures.length - 1) {
+    transitionTexIndex = 0;
   }
 
   mat.uniforms.transitionTex.value = textures[transitionTexIndex];
