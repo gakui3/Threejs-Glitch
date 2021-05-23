@@ -74,34 +74,38 @@ function addGUI() {
   gui = new GUI();
   gui.width = 400;
 
-  gui.add(param, "speed", 1.0, 3.0).onChange((value) => {
+  var params = gui.addFolder("Effect Parameters");
+  var forTransition = gui.addFolder("For transition");
+  var other = gui.addFolder("Other");
+
+  params.add(param, "speed", 1.0, 3.0).onChange((value) => {
     mat.uniforms.speed.value = value;
   });
-  gui.add(param, "distortionStrength", 0.01, 0.5).onChange((value) => {
+  params.add(param, "distortionStrength", 0.01, 0.5).onChange((value) => {
     mat.uniforms.distortionStrength.value = value;
   });
-  gui.add(param, "distortionWidth", 0.01, 0.5).onChange((value) => {
+  params.add(param, "distortionWidth", 0.01, 0.5).onChange((value) => {
     mat.uniforms.distortionWidth.value = value;
   });
-  gui.add(param, "distortionInterval", 0.5, 2.0).onChange((value) => {
+  params.add(param, "distortionInterval", 0.5, 2.0).onChange((value) => {
     mat.uniforms.distortionInterval.value = value;
   });
-  gui.add(param, "blockNoiseOffset", 0.05, 0.2).onChange((value) => {
+  params.add(param, "blockNoiseOffset", 0.05, 0.2).onChange((value) => {
     mat.uniforms.blockNoiseOffset.value = value;
   });
-  gui.add(param, "blockNoiseAmount", 0.0, 1.0).onChange((value) => {
+  params.add(param, "blockNoiseAmount", 0.0, 1.0).onChange((value) => {
     mat.uniforms.blockNoiseAmount.value = value;
   });
-  gui.add(param, "blockThickness", 0.1, 10.0).onChange((value) => {
+  params.add(param, "blockThickness", 0.1, 10.0).onChange((value) => {
     mat.uniforms.blockThickness.value = value;
   });
-  gui.add(param, "chromaticAberrationAmount", 0.1, 2.0).onChange((value) => {
+  params.add(param, "chromaticAberrationAmount", 0.1, 2.0).onChange((value) => {
     mat.uniforms.chromaticAberrationAmount.value = value;
   });
-  gui.add(param, "transitionValue", 0.0, 1.0).onChange((value) => {
+  forTransition.add(param, "transitionValue", 0.0, 1.0).onChange((value) => {
     mat.uniforms.transitionValue.value = value;
   });
-  gui.add(param, "planeScale", 0.1, 1.0).onChange((value) => {
+  other.add(param, "planeScale", 0.1, 1.0).onChange((value) => {
     plane.scale.set(value, value, 1);
   });
   gui.add(param, "onClick").name("click this to start transition");
